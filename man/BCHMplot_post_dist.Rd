@@ -4,7 +4,15 @@
 \alias{BCHMplot_post_dist}
 \title{Plot the posterior distributions of subgroups.}
 \usage{
-BCHMplot_post_dist(res, col, lty, lwd = 2, xlim = c(0, 1), ylim = NA)
+BCHMplot_post_dist(
+  res,
+  col = res$Result[, 4],
+  lty = 1:dim(res$Result)[1],
+  lwd = 2,
+  xlim = c(0, 1),
+  ylim = c(0, 20),
+  ...
+)
 }
 \arguments{
 \item{res}{BCHM calculation results.}
@@ -18,6 +26,8 @@ BCHMplot_post_dist(res, col, lty, lwd = 2, xlim = c(0, 1), ylim = NA)
 \item{xlim}{X-axis range}
 
 \item{ylim}{Y-axis range}
+
+\item{...}{other options}
 }
 \value{
 None

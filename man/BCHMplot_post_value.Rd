@@ -6,11 +6,14 @@
 \usage{
 BCHMplot_post_value(
   res,
-  col,
+  col = res$Result[, 4],
   pch = c(19, 4),
   cex = 2,
   HPD = 0.95,
-  ObsMean = FALSE
+  xlim = c(0, dim(res$Result)[1] + 2),
+  ylim = c(0, 1),
+  ObsMean = FALSE,
+  ...
 )
 }
 \arguments{
@@ -24,7 +27,13 @@ BCHMplot_post_value(
 
 \item{HPD}{Highest Posterior Density level for drawing (NA: No HPD drawing )}
 
+\item{xlim}{X-axis range}
+
+\item{ylim}{Y-axis range}
+
 \item{ObsMean}{Draw the observed mean of subgroups if this parameter is TRUE}
+
+\item{...}{other options}
 }
 \value{
 None

@@ -1,13 +1,13 @@
 library(plyr)
-library(clValid)
+#library(clValid)
 library(cluster)
 library(coda)
 library(rjags)
 
 #' @importFrom cluster silhouette
 #' @importFrom stats dist
-#' @importFrom clValid dunn
 #' 
+
 modelStr<-function()
 {
   mod1 <- "model
@@ -71,34 +71,53 @@ plotResult<-function(x, tab)
   plot(1:dim(x)[1], x, col=tab)
 }
 
-# Scale factor for probability
-factorLog <- function(v) {
+
+# ScaleFac
+scaleFac <- function(allData) {
   
-  pairLog <- function(x,y)
+  renorm <- function(x,y)
   {
     if ((y == -Inf) && (x == -Inf))
-    { return(-Inf); }
-    if (y < x) return(x+log(1 + exp(y-x)))
-    else return(y+log(1 + exp(x-y)));
+    {
+      return(-Inf)
+    }
+    
+    if (y < x){
+      return(x+log(1 + exp(y-x)))
+    }  else {
+      return(y+log(1 + exp(x-y)))
+    }
   }
-  if (length(v) == 1) return(v)
-  r <- v[1];
-  for (i in 2:length(v))
-    r <- pairLog(r, v[i])
+  
+  if (length(allData) == 1){
+    return(allData)
+  }
+  
+  r <- allData[1];
+  
+  for (i in 2:length(allData)){
+    r <- renorm(r, allData[i])
+  }
   return(r)
 }
 
-# Gaussian distribution 
-# sum = sum of data
-# sumsq = sum of squares of data
-# n = number of data
-# m0 = prior mean
-# t0 = prior variance
-# s = data generating variance
+## The distL and the sample functions are based on an example given by David Blei 
+
+distL <- function(sumV, sumsq, num, pMean, pVar, dVar)
+{
+  varV <- 1 / (1 / pVar + num / dVar)
+  meanV <- ((pMean / pVar) + (sumV / dVar)) * varV
+  
+  te <- - sumsq / dVar
+  te <- te + (meanV * meanV) / varV + log(varV)
+  te <- te - (pMean * pMean) / pVar - log(pVar)
+  te <- (length(sumV) / 2) * te
+  list(mean=meanV, var=varV, lhood=te)
+}
 
 
 sss<-function(ss, point, point.sq, weight, prior.mean, prior.var, data.var) {
-  gaussDist(ss$sum + point * weight,
+  distL(ss$sum + point * weight,
             ss$sumsq + point.sq * weight,
             ss$count + 1 * weight,
             prior.mean, prior.var, data.var)$lhood - ss$lhood
@@ -116,66 +135,28 @@ llNew<-function(t, point,  point.sq, weight, prior.mean, prior.var, data.var)
 }
 
 
-# Gaussian distribution 
-# sum = sum of data
-# sumsq = sum of squares of data
-# n = number of data
-# m0 = prior mean
-# t0 = prior variance
-# s = data generating variance
-
-gaussDist <- function(sumV, sumsq, n, m0, t0, s)
-{
-  varV <- 1 / (1/t0 + n/s)
-  meanV <- ((m0/t0) + (sumV/s)) * varV
-  
-  lhood <- - sumsq / s
-  lhood <- lhood + (meanV * meanV) / varV + log(varV)
-  lhood <- lhood - (m0 * m0) / t0 - log(t0)
-  lhood <- (length(sumV) / 2) * lhood
-  #browser()
-  #cat("cluster ", meanV, "  ", varV, m0, t0, s, sumV, "\n")
-  list(mean=mean, var=var, lhood=lhood)
-}
-
-
-# Sample groups
-sampleGroups <- function(point, suff.stats, counts, alpha,
+sampleGroups <- function(point, allGroups, counts, alpha,
                          prior.mean, prior.var, data.var, weight)
 {
-  # Data dimension
+
   n <- sum(counts)
   p <- length(point)
   point.sq <- point %*% point
   
-  # compute the prior
+
   log.denom <- log(n + alpha)
-  # Chinese restaurant algorithm
+
   log.prior <- c(log(counts) - log.denom, log(alpha) - log.denom)
-  #print(length(suff.stats))
-  # compute the integrated likelihood for each cluster
-  #ll <- laply(suff.stats,
-  #            function (ss) {
-  #              gaussDist(ss$sum + point * weight,
-  #                        ss$sumsq + point.sq * weight,
-  #                        ss$count + 1 * weight,
-  #                        prior.mean, prior.var, data.var)$lhood - ss$lhood
-  #            })
-  ll<-llNew(suff.stats, point, point.sq, weight, prior.mean, prior.var, data.var)
-  #print(ll)
-  # New cluster 
-  newL <- gaussDist(point * weight, point.sq * weight, 1 * weight,
+
+  ll<-llNew(allGroups, point, point.sq, weight, prior.mean, prior.var, data.var)
+
+  newL <- distL(point * weight, point.sq * weight, 1 * weight,
                     prior.mean, prior.var, data.var)$lhood
   
-  # combine to form a distribution
   prob <- log.prior + c(ll, newL)
   
-  # Normalize
-  prob <- prob - factorLog(prob)
+  prob <- prob - scaleFac(prob)
   prob <- exp(prob)
-  #prob<-prob/sum(prob)
-  # sample groups
-  # print(prob)
   sample(1:length(prob), 1, prob=prob)
 }
 
@@ -206,7 +187,7 @@ gibbsSampler <- function(data, alpha, prior.mean, prior.var, data.var, weight, b
         groups[[z]]$sum <- groups[[z]]$sum - x * w
         groups[[z]]$sumsq <- groups[[z]]$sumsq - (x %*% x) * w
         groups[[z]]$count <- groups[[z]]$count - w
-        groups[[z]]$lhood <- gaussDist(groups[[z]]$sum, groups[[z]]$sumsq,
+        groups[[z]]$lhood <- distL(groups[[z]]$sum, groups[[z]]$sumsq,
                                        groups[[z]]$count, prior.mean,
                                        prior.var, data.var)$lhood
         counts[z] <- counts[z] - w
@@ -229,16 +210,12 @@ gibbsSampler <- function(data, alpha, prior.mean, prior.var, data.var, weight, b
         z <- sampleGroups(x, groups, counts, alpha,
                           prior.mean, prior.var, data.var, w)
       
-      
-      # add this data point to its sampled table
       tables[i] <- z
       
-      # if we need to make a new table
       if (z > length(counts))
       {
-        # check that the table is the next table
+        
         stopifnot(z==length(counts) + 1)
-        # set up the new counts and sufficient statistics
         counts <- c(counts, 0)
         groups[[z]] <- list(sum=0, sumsq=0, lhood=0, count = 0)
       }
@@ -247,13 +224,11 @@ gibbsSampler <- function(data, alpha, prior.mean, prior.var, data.var, weight, b
       groups[[z]]$sum <- groups[[z]]$sum + x * w
       groups[[z]]$sumsq <- groups[[z]]$sumsq + x  %*%  x * w
       groups[[z]]$count <- groups[[z]]$count + w
-      groups[[z]]$lhood <- gaussDist(groups[[z]]$sum, groups[[z]]$sumsq,
+      groups[[z]]$lhood <- distL(groups[[z]]$sum, groups[[z]]$sumsq,
                                      groups[[z]]$count, prior.mean,
                                      prior.var, data.var)$lhood
     }
-    #plotResult(data, tables)
-    #print(tables)
-    #Sys.sleep(1)
+
     if (iter > burnIn)
     {
       allTab[iter-burnIn, ]<-tables
@@ -326,17 +301,12 @@ optimizeTab<-function(x, tables, gamma)
           s<-s + sum((allV-mean(allV))* (allV-mean(allV)))
         }
       }
-      
     }
     value[i]<-s
   }
-  #cat("RSS values:")
-  #print(value)
   ind<-which(value==min(value))[1]
   ind
-  
 }
-
 
 
 optimizeTabMedian<-function(x, tables)
@@ -355,11 +325,11 @@ optimizeTabMedian<-function(x, tables)
 }
 
 
-getDunnIndex<-function(x, result, ind)
-{
-  index<-dunn(clusters=result$tables[ind,], Data = x, method = "euclidean")
-  return (index)
-}
+# getDunnIndex<-function(x, result, ind)
+# {
+#   index<-dunn(clusters=result$tables[ind,], Data = x, method = "euclidean")
+#   return (index)
+# }
 
 
 optimizeSil<-function(x, tables)
@@ -373,19 +343,14 @@ optimizeSil<-function(x, tables)
     #value[i]<-dunn(clusters=tables[i,], Data = x, method = "euclidean")
     diss <- as.matrix(dist(x))
     ret <- silhouette(t, dmatrix=diss)
-    #print(ret)
-    #browser()
+
     if(!is.na(ret[1]))
     {
       value[i] <- mean(ret[,3])
     }else{
       value[i] <- -0.1
     }
-    
-    #cat(value[i])
   }
-  #browser()
-  #print(value)
   ind<-which(value==max(value))[1]
   list(ind=ind, sil=max(value))  
 }

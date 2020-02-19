@@ -3,8 +3,10 @@
 #' @param res BCHM calculation results.
 #' @param col Color vector
 #' @param pch pch vector
+#' @param xlim X-axis range
+#' @param ylim Y-axis range
 #' @param cex size of points
-
+#' @param ... other options
 #' @examples
 #' nDat = c(25, 25, 25, 25) # total number of patients
 #' xDat = c(2, 3, 8, 6)  # number of responses
@@ -44,13 +46,14 @@
 #' @seealso \code{\link{BCHMplot_post_dist} Plot the posterior distributions of subgroups. }
 
 #' @export
-BCHMplot_cluster <- function(res, col, pch, cex=2){
+BCHMplot_cluster <- function(res, col = res$Result[,4], pch = 16, xlim=c(0, dim(res$Result)[1] + 2), ylim = c(0, 1.0), cex=2, ...){
+
   UseMethod("BCHMplot_cluster")
 }
 
 #' @importFrom crayon red
 #' @export
-BCHMplot_cluster.default <- function(res, col, pch, cex=2) {
+BCHMplot_cluster.default <- function(res, col = res$Result[,4], pch = 16, xlim=c(0, dim(res$Result)[1] + 2), ylim = c(0, 1.0), cex=2, ...){
   stop(red(
     "Don't know how to make a plot with an object of type",
     paste(class(res), collapse = ", "), "."))
@@ -63,19 +66,28 @@ BCHMplot_cluster.default <- function(res, col, pch, cex=2) {
 #' @importFrom graphics axis legend lines points
 #' 
 #' @export
-BCHMplot_cluster.BCHM_result <- function(res, col, pch, cex=2)
+BCHMplot_cluster.BCHM_result <- function(res, col = res$Result[,4], pch = 16, xlim=c(0, dim(res$Result)[1] + 2), ylim = c(0, 1.0), cex=2, ...)
 {
   s <- res$Result
-  
+  if (sum(is.na(xlim)) > 0)
+  {
+    xlim <- c(0.5, dim(s)[1] + 0.5)
+  }
+  if (sum(is.na(ylim)) > 0)
+  {
+    ylim <- c(0, min(1, max(s[, 5]) + 0.1))
+  }
   plot(
     1:dim(s)[1],
     s[, 3],
     xlab="Subgroup ID", ylab="Observed Response Rates",
     main="Subgroup Clusters",
-    xlim = c(0.5, dim(s)[1] + 0.5),
-    pch = pch,  #s[, 4] + 15,
-    col = col, #s[, 4],
-    cex = cex #2 #weight / 10
+    xlim = xlim,
+    ylim = ylim, 
+    pch = pch,
+    col = col, 
+    cex = cex,
+    ...
   )
   xtick<- 1:dim(s)[1]
   axis(side=1, at=xtick)
@@ -90,7 +102,10 @@ BCHMplot_cluster.BCHM_result <- function(res, col, pch, cex=2)
 #' @param pch pch vector pch[1] Posterior mean pch[2] Observed mean
 #' @param cex size of points
 #' @param HPD Highest Posterior Density level for drawing (NA: No HPD drawing )
+#' @param xlim X-axis range
+#' @param ylim Y-axis range
 #' @param ObsMean Draw the observed mean of subgroups if this parameter is TRUE
+#' @param ... other options
 #' @examples
 #' nDat = c(25, 25, 25, 25) # total number of patients
 #' xDat = c(2, 3, 8, 6)  # number of responses
@@ -129,13 +144,13 @@ BCHMplot_cluster.BCHM_result <- function(res, col, pch, cex=2)
 #' @seealso \code{\link{BCHMplot_cluster} Plot the clustering results of subgroups. }
 #' @seealso \code{\link{BCHMplot_post_dist} Plot the posterior distributions of subgroups. }
 #' @export
-BCHMplot_post_value <- function(res, col, pch=c(19, 4), cex=2, HPD = 0.95, ObsMean = FALSE) {
+BCHMplot_post_value <- function(res, col = res$Result[,4], pch=c(19, 4), cex=2, HPD = 0.95, xlim=c(0, dim(res$Result)[1] + 2), ylim = c(0, 1.0), ObsMean = FALSE, ...) {
   UseMethod("BCHMplot_post_value")
 }
 
 #' @importFrom crayon red
 #' @export
-BCHMplot_post_value.default <- function(res, col, pch=c(19, 4), cex=2, HPD = 0.95, ObsMean = FALSE){
+BCHMplot_post_value.default <- function(res, col = res$Result[,4], pch=c(19, 4), cex=2, HPD = 0.95, xlim=c(0, dim(res$Result)[1] + 2), ylim = c(0, 1.0), ObsMean = FALSE, ...) {
   stop(red(
     "Don't know how to make a plot with an object of type",
     paste(class(res), collapse = ", "), "."))
@@ -147,13 +162,22 @@ BCHMplot_post_value.default <- function(res, col, pch=c(19, 4), cex=2, HPD = 0.9
 #' @importFrom graphics axis legend lines points
 #' 
 #' @export
-BCHMplot_post_value.BCHM_result <- function(res, col, pch=c(19, 4), cex=2, HPD = 0.95, ObsMean = FALSE)
+BCHMplot_post_value.BCHM_result <- function(res, col = res$Result[,4], pch=c(19, 4), cex=2, HPD = 0.95, xlim=c(0, dim(res$Result)[1] + 2), ylim = c(0, 1.0), ObsMean = FALSE, ...) 
 {
   if (length(cex) < 2)
   {
     cex <- rep(cex, 2)
   }
   s <- res$Result
+  
+  if (sum(is.na(xlim)) > 0)
+  {
+    xlim <- c(0.5, dim(s)[1] + 0.5)
+  }
+  if (sum(is.na(ylim)) > 0)
+  {
+    ylim <- c(0, min(1, max(s[, 5]) + 0.1))
+  }
   if (is.na(HPD))
   {
     plot(
@@ -162,12 +186,13 @@ BCHMplot_post_value.BCHM_result <- function(res, col, pch=c(19, 4), cex=2, HPD =
       xlab = "Subgroup ID",
       ylab = "Posterior Response Rates",
       main = "Posterior Probability",
-      xlim = c(0.5, dim(s)[1] + 0.5),
-      ylim = c(0, min(1, max(s[, 5]) + 0.1)),
+      xlim = xlim,
+      ylim = ylim,
       pch = pch[1], #19 s[, 4] + 15,
       col = col,
       #s[, 4],
-      cex = cex[1] #weight / 10
+      cex = cex[1], #weight / 10
+      ...
     )
     xtick<- 1:dim(s)[1]
     axis(side=1, at=xtick)
@@ -179,11 +204,12 @@ BCHMplot_post_value.BCHM_result <- function(res, col, pch=c(19, 4), cex=2, HPD =
       xlab = "Subgroup ID",
       ylab = "Posterior Response Rates",
       main = paste0("Posterior Probability HPD = ", HPD),
-      xlim = c(0.5, dim(s)[1] + 0.5),
-      ylim = c(0, min(1, max(s[, 5]) + 0.3)),
+      xlim = xlim,
+      ylim = ylim,
       pch = pch[1], #s[, 4] + 15,
       col = col, #s[, 4],
-      cex = cex[1] #weight / 10
+      cex = cex[1], #weight / 10
+      ...
     )
     xtick<- 1:dim(s)[1]
     axis(side=1, at=xtick)
@@ -208,9 +234,7 @@ BCHMplot_post_value.BCHM_result <- function(res, col, pch=c(19, 4), cex=2, HPD =
       cex = cex[2] #weight / 10
     )
   }
-  
 }
-
 
 
 #' @title Plot the posterior distributions of subgroups. 
@@ -221,6 +245,7 @@ BCHMplot_post_value.BCHM_result <- function(res, col, pch=c(19, 4), cex=2, HPD =
 #' @param lwd line width
 #' @param xlim X-axis range
 #' @param ylim Y-axis range
+#' @param ... other options
 #' @examples
 #' nDat = c(25, 25, 25, 25) # total number of patients
 #' xDat = c(2, 3, 8, 6)  # number of responses
@@ -259,7 +284,7 @@ BCHMplot_post_value.BCHM_result <- function(res, col, pch=c(19, 4), cex=2, HPD =
 #' @seealso \code{\link{BCHMplot_cluster} Plot the clustering results of subgroups. }
 #' @seealso \code{\link{BCHMplot_post_value} Plot the posterior response of subgroups. }
 #' @export
-BCHMplot_post_dist <- function(res, col, lty, lwd = 2, xlim=c(0,1), ylim = NA){
+BCHMplot_post_dist <- function(res, col= res$Result[,4], lty = 1:dim(res$Result)[1], lwd = 2, xlim=c(0,1), ylim = c(0, 20), ...){
   UseMethod("BCHMplot_post_dist")
 }
 
@@ -267,7 +292,7 @@ BCHMplot_post_dist <- function(res, col, lty, lwd = 2, xlim=c(0,1), ylim = NA){
 
 #' @importFrom crayon red
 #' @export
-BCHMplot_post_dist.default <- function(res, col, lty, lwd = 2, xlim=c(0,1), ylim = NA){
+BCHMplot_post_dist.default <- function(res, col= res$Result[,4], lty = 1:dim(res$Result)[1], lwd = 2, xlim=c(0,1), ylim = c(0, 20), ...){
   stop(red(
     "Don't know how to make a plot with an object of type",
     paste(class(res), collapse = ", "), "."))
@@ -278,7 +303,7 @@ BCHMplot_post_dist.default <- function(res, col, lty, lwd = 2, xlim=c(0,1), ylim
 #' @importFrom graphics plot
 #' @importFrom graphics axis legend lines points
 #' @export
-BCHMplot_post_dist.BCHM_result <- function(res, col, lty, lwd = 2, xlim=c(0,1), ylim = NA)
+BCHMplot_post_dist.BCHM_result <- function(res, col= res$Result[,4], lty = 1:dim(res$Result)[1], lwd = 2, xlim=c(0,1), ylim = c(0, 20), ...)
 {
   r <- res$Result
   #xLim <- max(r[, 2] / r[, 1]) + 0.3
@@ -295,13 +320,13 @@ BCHMplot_post_dist.BCHM_result <- function(res, col, lty, lwd = 2, xlim=c(0,1), 
     ylim <- c(0, maxY * 1.1)
   }
   legendStr <- c()
-   plot(c(0,0), ylim = ylim, xlim = xlim, col = "white", xlab="Response Rates", xaxt='n', ylab="Density", main="Posterior Distribution")
+   plot(c(0,0), ylim = ylim, xlim = xlim, col = "white", xlab="Response Rates", xaxt='n', ylab="Density", main="Posterior Distribution", ...)
    xtick<- (0:5) / 5
    axis(side=1, at=xtick)   
    for (i in 1:dim(s)[2])
    {
      lines(density(s[,i]),
-           col = col[i], lty=lty[i], lwd = lwd)
+           col = col[i], lty=lty[i], lwd = lwd, ...)
      legendStr <- c(legendStr, paste("Subg.", i))
    }
 

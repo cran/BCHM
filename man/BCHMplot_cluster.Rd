@@ -4,7 +4,15 @@
 \alias{BCHMplot_cluster}
 \title{Plot the clustering results of subgroups.}
 \usage{
-BCHMplot_cluster(res, col, pch, cex = 2)
+BCHMplot_cluster(
+  res,
+  col = res$Result[, 4],
+  pch = 16,
+  xlim = c(0, dim(res$Result)[1] + 2),
+  ylim = c(0, 1),
+  cex = 2,
+  ...
+)
 }
 \arguments{
 \item{res}{BCHM calculation results.}
@@ -13,7 +21,13 @@ BCHMplot_cluster(res, col, pch, cex = 2)
 
 \item{pch}{pch vector}
 
+\item{xlim}{X-axis range}
+
+\item{ylim}{Y-axis range}
+
 \item{cex}{size of points}
+
+\item{...}{other options}
 }
 \value{
 None

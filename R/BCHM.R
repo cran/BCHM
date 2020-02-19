@@ -113,7 +113,7 @@ BCHM <- function(nDat,
   x <- as.matrix(res)
   estVarGroup <- sigmaD2   # Data variance
   inSD <- sd(res)
-  #print("Computation starts running:")
+
   result <-
     gibbsSampler(x,
                  alphaP,
@@ -142,25 +142,24 @@ BCHM <- function(nDat,
     }
   }
   
-  
   sm <- sm / tSize
+  
+  # armSi <- 25
+  # al<- armSi * meanResp + 1
+  # be<- armSi - armSi * meanResp + 1
+  # sd2 <- 2 * sqrt(varBeta(al,be))
+  # smMinR<-d0/(1+exp(20*(inSD-sd2)))
+  
   smMinR <- d0
   sm[sm < smMinR] <- smMinR
-  
-  #browser()
-  
-  #print("The similarity Matrix C_ij:")
-  
+
   SMatrix <- sm
   rownames(SMatrix) <- 1:numArm
   colnames(SMatrix) <- 1:numArm
-  #print(SMatrix)
-  
 
   optm <- optimizeSil(x, tables)
   ind <- optm$ind
-  #perfom<-optm$sil
-  #ind <-1
+
   perform <- 0.0
 
   clusters <- result$tables[ind,]
@@ -179,12 +178,9 @@ BCHM <- function(nDat,
   outAll[, 2] <- weight
   outAll[, 3] <- round(posi / weight + 1e-9, 3)
   outAll[, 4] <- clusters
-  #outAll[,7]<-rate
-  
-  #  browser()
+
   sm[sm < 0.001] <- 0.001 # Prevent bugs crash
   maxY <- 0
-  #print("Computing the posterior distribution of all subgroups:")
 
   for (i in 1:numArm)
   {
@@ -256,8 +252,7 @@ BCHM <- function(nDat,
       sm = sm,
       clusterT = tables
     )
-  #dput(allDat,"result.txt")
-  #allDat
+
   
   decision <- outAll[,6] > thetaT
   outAll[,7] <- decision
@@ -272,5 +267,4 @@ BCHM <- function(nDat,
   class(result) <-"BCHM_result"
   result
   
-  #outAll[,6]
 }
