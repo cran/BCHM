@@ -1,4 +1,4 @@
-ca6e936381b5f78176c284c333966330 *DESCRIPTION
+c470c375e16b943bdb211f56f1355eac *DESCRIPTION
 1ade8f326d393f772582555c48e4d28a *NAMESPACE
 e510b3b4b2823ecf5cc6093754f4fd84 *R/BCHM.R
 4e2e3a05def9dd287cc05c8d784efe58 *R/plot.R
@@ -6,7 +6,7 @@ e510b3b4b2823ecf5cc6093754f4fd84 *R/BCHM.R
 c0b4ec47df20e7743745c165c4a6ef05 *build/vignette.rds
 9e9fde2f3cc9f1ab81adcb4eafcfbd80 *inst/doc/using-the-BCHM-package.R
 38acb4f4a4ddaaf4905cecddcd470a8e *inst/doc/using-the-BCHM-package.Rmd
-f16f9839b9083d8c06b82223b6969fa8 *inst/doc/using-the-BCHM-package.html
+f17ef7f05a903eb19c081ff8ea248905 *inst/doc/using-the-BCHM-package.html
 a48de89c73436cd95d44ebbe623929d5 *man/BCHM.Rd
 e36f638357ebd05fd7bb1750c6e9f1d6 *man/BCHMplot_cluster.Rd
 5958c7343574d46d0aeaea9fbbf4e6fb *man/BCHMplot_post_dist.Rd
